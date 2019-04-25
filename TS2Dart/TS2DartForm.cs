@@ -151,7 +151,7 @@ namespace TS2Dart
                                         {
                                             classLine += splittedLine.ElementAt(i) + ' ';
                                             className = splittedLine.ElementAt(i + 1);
-                                            dartClassName = className.Substring(0, 1).ToUpper() + className.Remove(0, 1);
+                                            dartClassName = ToLowerCamelCase(className.Substring(0, 1).ToUpper() + className.Remove(0, 1));
                                             classLine += dartClassName + ' ';
                                             continue;
                                         }
@@ -216,7 +216,7 @@ namespace TS2Dart
                                 }
                                 if (line.Contains("constructor"))
                                 {
-                                    dartStreamWriter.WriteLine("  " + className.Substring(0, 1).ToUpper() + className.Remove(0, 1) + "({");
+                                    dartStreamWriter.WriteLine("  " + dartClassName + "({");
                                     foreach (var property in classProperties)
                                     {
                                         if (property.readOnly && property.isInitialized)
@@ -246,10 +246,12 @@ namespace TS2Dart
                             foreach (var metadataField in metadata.metadataFields)
                             {
                                 var metadataFieldClassName = '_' + metadataField.name.Substring(0, 1).ToUpper() + metadataField.name.Remove(0, 1);
-                                dartStreamWriter.WriteLine($"class {metadataFieldClassName} {{  // {metadataField.originalName}");
+                                dartStreamWriter.WriteLine($"/// `{metadataField.originalName}`");
+                                dartStreamWriter.WriteLine($"class {metadataFieldClassName} {{");
                                 foreach (var metadataOption in metadataField.metadataOptions)
                                 {
-                                    dartStreamWriter.WriteLine($"  final {metadataOption.name} = {metadataOption.value};  // {metadataOption.originalName}");
+                                    dartStreamWriter.WriteLine($"  /// `{metadataOption.originalName}`");
+                                    dartStreamWriter.WriteLine($"  final {metadataOption.name} = {metadataOption.value};");
                                 }
                                 dartStreamWriter.WriteLine("}\n");
                             }
