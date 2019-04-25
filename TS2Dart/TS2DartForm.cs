@@ -96,18 +96,22 @@ namespace TS2Dart
                                         {
                                             metadata.metadataFields.Add(currentMetadataField);
                                         }
+                                        var fieldOriginalName = line.Split(' ').Where(s => s.Length > 0).First().Replace(":", "");
                                         currentMetadataField = new MetadataField
                                         {
-                                            name = ToLowerCamelCase(line.Split(' ').Where(s => s.Length > 0).First().Replace(":", ""))
+                                            originalName = fieldOriginalName,
+                                            name = ToLowerCamelCase(fieldOriginalName),
                                         };
                                         continue;
                                     }
                                     if (Regex.Match(line, @".*:.*\d.*").Success)
                                     {
+                                        var optionOriginalName = line.Split(' ').Where(s => s.Length > 0).First().Replace(":", "");
                                         currentMetadataField.metadataOptions.Add(
                                             new MetadataOption()
                                             {
-                                                name = ToLowerCamelCase(MetadataClass.TransleetToEN(line.Split(' ').Where(s => s.Length > 0).First().Replace(":", ""))),
+                                                originalName = optionOriginalName,
+                                                name = ToLowerCamelCase(MetadataClass.TransleetToEN(optionOriginalName)),
                                                 value = line.Split(' ').Where(s => s.Length > 0).Last().Replace(",", ""),
                                             }
                                         );
@@ -225,27 +229,27 @@ namespace TS2Dart
                                 }
                             }
                             dartStreamWriter.WriteLine("");
-                            dartStreamWriter.WriteLine("  static _Metadata metadata;");
+                            dartStreamWriter.WriteLine("  static _Metadata metadata = _Metadata();");
                             dartStreamWriter.WriteLine("");
                             dartStreamWriter.WriteLine($"  factory {dartClassName}.fromJson(Map<String, dynamic> json) => _${dartClassName}FromJson(json);");
                             dartStreamWriter.WriteLine($"  Map<String, dynamic> toJson() => _${dartClassName}ToJson(this);");
                             dartStreamWriter.WriteLine("}");
                             dartStreamWriter.WriteLine("");
                             dartStreamWriter.WriteLine("class _Metadata {");
-                            foreach (var matadataField in metadata.metadataFields)
+                            foreach (var metadataField in metadata.metadataFields)
                             {
-                                var metadataFieldClassName = '_' + matadataField.name.Substring(0, 1).ToUpper() + matadataField.name.Remove(0, 1);
-                                dartStreamWriter.WriteLine($"  final {metadataFieldClassName} {matadataField.name} = {metadataFieldClassName}();");
+                                var metadataFieldClassName = '_' + metadataField.name.Substring(0, 1).ToUpper() + metadataField.name.Remove(0, 1);
+                                dartStreamWriter.WriteLine($"  final {metadataFieldClassName} {metadataField.name} = {metadataFieldClassName}();");
                             }
                             dartStreamWriter.WriteLine("}");
                             dartStreamWriter.WriteLine("");
-                            foreach (var matadataField in metadata.metadataFields)
+                            foreach (var metadataField in metadata.metadataFields)
                             {
-                                var metadataFieldClassName = '_' + matadataField.name.Substring(0, 1).ToUpper() + matadataField.name.Remove(0, 1);
-                                dartStreamWriter.WriteLine($"class {metadataFieldClassName} {{");
-                                foreach (var metadataOption in matadataField.metadataOptions)
+                                var metadataFieldClassName = '_' + metadataField.name.Substring(0, 1).ToUpper() + metadataField.name.Remove(0, 1);
+                                dartStreamWriter.WriteLine($"class {metadataFieldClassName} {{  // {metadataField.originalName}");
+                                foreach (var metadataOption in metadataField.metadataOptions)
                                 {
-                                    dartStreamWriter.WriteLine($"  final {metadataOption.name} = {metadataOption.value};");
+                                    dartStreamWriter.WriteLine($"  final {metadataOption.name} = {metadataOption.value};  // {metadataOption.originalName}");
                                 }
                                 dartStreamWriter.WriteLine("}\n");
                             }
@@ -344,12 +348,14 @@ namespace TS2Dart
 
     class MetadataOption
     {
+        public string originalName;
         public string name;
         public string value;
     }
 
     class MetadataField
     {
+        public string originalName;
         public string name;
         public List<MetadataOption> metadataOptions = new List<MetadataOption>();
     }
