@@ -161,7 +161,9 @@ namespace TS2Dart
                                     dartStreamWriter.WriteLine("");
                                     dartStreamWriter.WriteLine($"part '{className}.g.dart';");
                                     dartStreamWriter.WriteLine("");
-                                    dartStreamWriter.WriteLine("@JsonSerializable()");
+                                    dartStreamWriter.WriteLine("@JsonSerializable(");
+                                    dartStreamWriter.WriteLine("  explicitToJson: true,");
+                                    dartStreamWriter.WriteLine(")");
                                     dartStreamWriter.WriteLine(classLine);
                                 }
                                 if (Regex.Match(line, @"(.[^\(\)])*:.*;").Success)
@@ -183,6 +185,14 @@ namespace TS2Dart
                                                 break;
                                             case "=":
                                                 classProperty.isInitialized = true;
+                                                break;
+                                            case "string":
+                                            case "Base.LookupItem":
+                                            case "Base.PicklistItem":
+                                            case "Base.Date":
+                                            case "boolean":
+                                            case "number":
+                                                classProperty.type = splittedLine.ElementAt(i);
                                                 break;
                                             default:
                                                 var match = Regex.Match(splittedLine.ElementAt(i), @".*:");
@@ -225,11 +235,22 @@ namespace TS2Dart
                                         }
                                         dartStreamWriter.WriteLine($"    this.{property.dartName},");
                                     }
-                                    dartStreamWriter.WriteLine("  }) : super();");
+                                    dartStreamWriter.WriteLine("  }) : super(props: [");
+                                    foreach (var property in classProperties)
+                                    {
+                                        if (property.readOnly && property.isInitialized)
+                                        {
+                                            continue;
+                                        }
+                                        dartStreamWriter.WriteLine($"    {property.dartName},");
+                                    }
+                                    dartStreamWriter.WriteLine("  ]);");
                                 }
                             }
                             dartStreamWriter.WriteLine("");
                             dartStreamWriter.WriteLine("  static _Metadata metadata = _Metadata();");
+                            dartStreamWriter.WriteLine("");
+                            dartStreamWriter.WriteLine($"  factory {dartClassName}.from{dartClassName}({dartClassName} source) => {dartClassName}.fromJson(source.toJson());");
                             dartStreamWriter.WriteLine("");
                             dartStreamWriter.WriteLine($"  factory {dartClassName}.fromJson(Map<String, dynamic> json) => _${dartClassName}FromJson(json);");
                             dartStreamWriter.WriteLine($"  Map<String, dynamic> toJson() => _${dartClassName}ToJson(this);");
@@ -250,7 +271,7 @@ namespace TS2Dart
                                 dartStreamWriter.WriteLine($"class {metadataFieldClassName} {{");
                                 foreach (var metadataOption in metadataField.metadataOptions)
                                 {
-                                    dartStreamWriter.WriteLine($"  /// `{metadataOption.originalName}`");
+                                    dartStreamWriter.WriteLine($"  /// `{metadataOption.originalName}` = {metadataOption.value}");
                                     dartStreamWriter.WriteLine($"  final {metadataOption.name} = {metadataOption.value};");
                                 }
                                 dartStreamWriter.WriteLine("}\n");
@@ -332,7 +353,7 @@ namespace TS2Dart
                         result += "bool ";
                         break;
                     case "number":
-                        result += "double ";
+                        result += "num ";
                         break;
                 }
             }
