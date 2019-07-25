@@ -127,11 +127,13 @@ namespace TS2Dart
 
                                 if (line.Contains("import") && line.Contains("Base"))
                                 {
-                                    dartStreamWriter.WriteLine("import 'package:deltapro/models/base.dart';");
+                                    dartStreamWriter.WriteLine("// ignore: unused_import");
+                                    dartStreamWriter.WriteLine("import 'package:dompro/models/base.dart';");
                                 }
                                 if (line.Contains("import") && line.Contains("EntityProxyBase"))
                                 {
-                                    dartStreamWriter.WriteLine("import 'package:deltapro/models/entity_proxy_base.dart';");
+                                    dartStreamWriter.WriteLine("// ignore: unused_import");
+                                    dartStreamWriter.WriteLine("import 'package:dompro/models/entity_proxy_base.dart';");
                                 }
                                 if (line.Contains("class"))
                                 {
