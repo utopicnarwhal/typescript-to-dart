@@ -37,87 +37,110 @@
             this.dartFolderButton = new System.Windows.Forms.Button();
             this.dartFolderPathTextBox = new System.Windows.Forms.TextBox();
             this.convertButton = new System.Windows.Forms.Button();
-            this.progressBar1 = new System.Windows.Forms.ProgressBar();
+            this.convertTypeTabs = new System.Windows.Forms.TabControl();
+            this.folders = new System.Windows.Forms.TabPage();
+            this.text = new System.Windows.Forms.TabPage();
+            this.convertTextButton = new System.Windows.Forms.Button();
+            this.DartTextbox = new System.Windows.Forms.TextBox();
+            this.TStextbox = new System.Windows.Forms.TextBox();
             this.bindingSource1 = new System.Windows.Forms.BindingSource(this.components);
+            this.convertTypeTabs.SuspendLayout();
+            this.folders.SuspendLayout();
+            this.text.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).BeginInit();
             this.SuspendLayout();
             // 
             // tsFolderPathTextBox
             // 
-            this.tsFolderPathTextBox.Enabled = false;
-            this.tsFolderPathTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.tsFolderPathTextBox.Location = new System.Drawing.Point(148, 13);
+            resources.ApplyResources(this.tsFolderPathTextBox, "tsFolderPathTextBox");
             this.tsFolderPathTextBox.Name = "tsFolderPathTextBox";
-            this.tsFolderPathTextBox.Size = new System.Drawing.Size(441, 26);
-            this.tsFolderPathTextBox.TabIndex = 0;
             // 
             // tsFolderButton
             // 
-            this.tsFolderButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.tsFolderButton.Location = new System.Drawing.Point(13, 13);
+            resources.ApplyResources(this.tsFolderButton, "tsFolderButton");
             this.tsFolderButton.Name = "tsFolderButton";
-            this.tsFolderButton.Size = new System.Drawing.Size(129, 26);
-            this.tsFolderButton.TabIndex = 1;
-            this.tsFolderButton.Text = "Указать папку с TS";
             this.tsFolderButton.UseVisualStyleBackColor = true;
             this.tsFolderButton.Click += new System.EventHandler(this.tsFolderButton_Click);
             // 
             // dartFolderButton
             // 
-            this.dartFolderButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.dartFolderButton.Location = new System.Drawing.Point(12, 45);
+            resources.ApplyResources(this.dartFolderButton, "dartFolderButton");
             this.dartFolderButton.Name = "dartFolderButton";
-            this.dartFolderButton.Size = new System.Drawing.Size(129, 26);
-            this.dartFolderButton.TabIndex = 2;
-            this.dartFolderButton.Text = "Указать папку с Dart";
             this.dartFolderButton.UseVisualStyleBackColor = true;
             this.dartFolderButton.Click += new System.EventHandler(this.dartFolderButton_Click);
             // 
             // dartFolderPathTextBox
             // 
-            this.dartFolderPathTextBox.Enabled = false;
-            this.dartFolderPathTextBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.dartFolderPathTextBox.Location = new System.Drawing.Point(148, 44);
+            resources.ApplyResources(this.dartFolderPathTextBox, "dartFolderPathTextBox");
             this.dartFolderPathTextBox.Name = "dartFolderPathTextBox";
-            this.dartFolderPathTextBox.Size = new System.Drawing.Size(441, 26);
-            this.dartFolderPathTextBox.TabIndex = 3;
             // 
             // convertButton
             // 
-            this.convertButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.convertButton.Location = new System.Drawing.Point(225, 76);
+            resources.ApplyResources(this.convertButton, "convertButton");
             this.convertButton.Name = "convertButton";
-            this.convertButton.Size = new System.Drawing.Size(146, 38);
-            this.convertButton.TabIndex = 4;
-            this.convertButton.Text = "Конвертировать!";
             this.convertButton.UseVisualStyleBackColor = true;
             this.convertButton.Click += new System.EventHandler(this.convertButton_Click);
             // 
-            // progressBar1
+            // convertTypeTabs
             // 
-            this.progressBar1.Location = new System.Drawing.Point(13, 120);
-            this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(576, 23);
-            this.progressBar1.TabIndex = 5;
+            resources.ApplyResources(this.convertTypeTabs, "convertTypeTabs");
+            this.convertTypeTabs.Controls.Add(this.folders);
+            this.convertTypeTabs.Controls.Add(this.text);
+            this.convertTypeTabs.Name = "convertTypeTabs";
+            this.convertTypeTabs.SelectedIndex = 0;
+            // 
+            // folders
+            // 
+            this.folders.Controls.Add(this.dartFolderPathTextBox);
+            this.folders.Controls.Add(this.convertButton);
+            this.folders.Controls.Add(this.tsFolderPathTextBox);
+            this.folders.Controls.Add(this.tsFolderButton);
+            this.folders.Controls.Add(this.dartFolderButton);
+            resources.ApplyResources(this.folders, "folders");
+            this.folders.Name = "folders";
+            this.folders.UseVisualStyleBackColor = true;
+            // 
+            // text
+            // 
+            this.text.Controls.Add(this.convertTextButton);
+            this.text.Controls.Add(this.DartTextbox);
+            this.text.Controls.Add(this.TStextbox);
+            resources.ApplyResources(this.text, "text");
+            this.text.Name = "text";
+            this.text.UseVisualStyleBackColor = true;
+            // 
+            // convertTextButton
+            // 
+            resources.ApplyResources(this.convertTextButton, "convertTextButton");
+            this.convertTextButton.Name = "convertTextButton";
+            this.convertTextButton.UseVisualStyleBackColor = true;
+            this.convertTextButton.Click += new System.EventHandler(this.convertTextButton_Click);
+            // 
+            // DartTextbox
+            // 
+            resources.ApplyResources(this.DartTextbox, "DartTextbox");
+            this.DartTextbox.Name = "DartTextbox";
+            // 
+            // TStextbox
+            // 
+            resources.ApplyResources(this.TStextbox, "TStextbox");
+            this.TStextbox.Name = "TStextbox";
             // 
             // TS2DartForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            resources.ApplyResources(this, "$this");
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(601, 155);
-            this.Controls.Add(this.progressBar1);
-            this.Controls.Add(this.convertButton);
-            this.Controls.Add(this.dartFolderPathTextBox);
-            this.Controls.Add(this.dartFolderButton);
-            this.Controls.Add(this.tsFolderButton);
-            this.Controls.Add(this.tsFolderPathTextBox);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Controls.Add(this.convertTypeTabs);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Name = "TS2DartForm";
-            this.Text = "TS2Dart";
             this.Load += new System.EventHandler(this.TS2DartForm_Load);
+            this.convertTypeTabs.ResumeLayout(false);
+            this.folders.ResumeLayout(false);
+            this.folders.PerformLayout();
+            this.text.ResumeLayout(false);
+            this.text.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).EndInit();
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
@@ -130,8 +153,13 @@
         private System.Windows.Forms.Button dartFolderButton;
         private System.Windows.Forms.TextBox dartFolderPathTextBox;
         private System.Windows.Forms.Button convertButton;
-        private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.BindingSource bindingSource1;
+        private System.Windows.Forms.TabControl convertTypeTabs;
+        private System.Windows.Forms.TabPage folders;
+        private System.Windows.Forms.TabPage text;
+        private System.Windows.Forms.Button convertTextButton;
+        private System.Windows.Forms.TextBox DartTextbox;
+        private System.Windows.Forms.TextBox TStextbox;
     }
 }
 

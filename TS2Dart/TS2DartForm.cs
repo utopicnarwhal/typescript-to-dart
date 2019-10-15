@@ -45,15 +45,33 @@ namespace TS2Dart
             }
         }
 
+        private void convertTextButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string[] tsFileLines = TStextbox.Text.Split('\n');
+                DartTextbox.Text = string.Empty;
+
+                var stream = new MemoryStream();
+                var dartStreamWriter = new StreamWriter(stream);
+                var dartStreamReader = new StreamReader(stream);
+                Convert(tsFileLines, dartStreamWriter);
+                dartStreamWriter.Flush();
+                stream.Position = 0;
+                DartTextbox.Text = dartStreamReader.ReadToEnd();
+                MessageBox.Show("Конвертация успешно завершена");
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show("При конвертации произошла ошибка: " + error.ToString());
+            }
+        }
+
         private void convertButton_Click(object sender, EventArgs e)
         {
             try
             {
                 string[] files = Directory.GetFiles(tsFolderPathTextBox.Text, "*.ts");
-
-                progressBar1.Value = 0;
-                progressBar1.Minimum = 0;
-                progressBar1.Maximum = files.Length;
 
                 foreach (var tsFile in files)
                 {
@@ -64,227 +82,256 @@ namespace TS2Dart
                     {
                         using (var dartStreamWriter = new StreamWriter(dartFileStream))
                         {
-                            var className = "";
-                            var dartClassName = "";
-                            var isMetadataMode = false;
-                            var metadata = new MetadataClass();
-                            var currentMetadataField = new MetadataField();
-                            var classProperties = new List<ClassProperty>();
-                            dartStreamWriter.WriteLine("// This file is generated automatically");
-                            dartStreamWriter.WriteLine("// Don't modify by hand!");
-                            foreach (var line in tsFileLines)
-                            {
-                                if (line.StartsWith("//"))
-                                {
-                                    continue;
-                                }
-
-                                if (Regex.Match(line, @"readonly.*metadata.*=.*{").Success)
-                                {
-                                    isMetadataMode = true;
-                                    continue;
-                                }
-                                if (isMetadataMode)
-                                {
-                                    if (line.Contains("};"))
-                                    {
-                                        isMetadataMode = false;
-                                    }
-                                    if (Regex.Match(line, @".*:.*{").Success)
-                                    {
-                                        if (currentMetadataField != null && currentMetadataField.name != null)
-                                        {
-                                            metadata.metadataFields.Add(currentMetadataField);
-                                        }
-                                        var fieldOriginalName = line.Split(' ').Where(s => s.Length > 0).First().Replace(":", "");
-                                        currentMetadataField = new MetadataField
-                                        {
-                                            originalName = fieldOriginalName,
-                                            name = ToLowerCamelCase(fieldOriginalName),
-                                        };
-                                        continue;
-                                    }
-                                    if (Regex.Match(line, @".*:.*\d.*").Success)
-                                    {
-                                        var optionOriginalName = line.Split(' ').Where(s => s.Length > 0).First().Replace(":", "");
-                                        currentMetadataField.metadataOptions.Add(
-                                            new MetadataOption()
-                                            {
-                                                originalName = optionOriginalName,
-                                                name = ToLowerCamelCase(MetadataClass.TransleetToEN(optionOriginalName)),
-                                                value = line.Split(' ').Where(s => s.Length > 0).Last().Replace(",", ""),
-                                            }
-                                        );
-                                    }
-                                    continue;
-                                }
-
-                                if (string.IsNullOrWhiteSpace(line))
-                                {
-                                    dartStreamWriter.WriteLine("");
-                                    continue;
-                                }
-
-                                if (line.Contains("import") && line.Contains("Base"))
-                                {
-                                    dartStreamWriter.WriteLine("import 'package:deltapro/models/base.dart';");
-                                }
-                                if (line.Contains("import") && line.Contains("EntityProxyBase"))
-                                {
-                                    dartStreamWriter.WriteLine("import 'package:deltapro/models/entity_proxy_base.dart';");
-                                }
-                                if (line.Contains("class"))
-                                {
-                                    var splittedLine = line.Split(' ');
-                                    var classLine = "";
-                                    for (int i = 0; i < splittedLine.Length; ++i)
-                                    {
-                                        if (className.Length > 0 && splittedLine.ElementAt(i).Contains(className))
-                                        {
-                                            continue;
-                                        }
-                                        if (splittedLine.ElementAt(i).Contains("export"))
-                                        {
-                                            continue;
-                                        }
-                                        if (splittedLine.ElementAt(i).Contains("class"))
-                                        {
-                                            classLine += splittedLine.ElementAt(i) + ' ';
-                                            className = splittedLine.ElementAt(i + 1);
-                                            dartClassName = ToLowerCamelCase(className.Substring(0, 1).ToUpper() + className.Remove(0, 1));
-                                            classLine += dartClassName + ' ';
-                                            continue;
-                                        }
-                                        classLine += splittedLine.ElementAt(i) + ' ';
-                                    }
-                                    dartStreamWriter.WriteLine("import 'package:json_annotation/json_annotation.dart';");
-                                    dartStreamWriter.WriteLine("");
-                                    dartStreamWriter.WriteLine($"part '{className}.g.dart';");
-                                    dartStreamWriter.WriteLine("");
-                                    dartStreamWriter.WriteLine("@JsonSerializable(");
-                                    dartStreamWriter.WriteLine("  explicitToJson: true,");
-                                    dartStreamWriter.WriteLine(")");
-                                    dartStreamWriter.WriteLine(classLine);
-                                }
-                                if (Regex.Match(line, @"(.[^\(\)])*:.*;").Success)
-                                {
-                                    var classProperty = new ClassProperty();
-                                    var splittedLine = line.Split(' ');
-                                    for (int i = 0; i < splittedLine.Length; ++i)
-                                    {
-                                        switch (splittedLine.ElementAt(i))
-                                        {
-                                            case "private":
-                                                classProperty.isPrivate = true;
-                                                break;
-                                            case "public":
-                                                classProperty.isPrivate = false;
-                                                break;
-                                            case "readonly":
-                                                classProperty.readOnly = true;
-                                                break;
-                                            case "=":
-                                                classProperty.isInitialized = true;
-                                                break;
-                                            case "string":
-                                            case "Base.LookupItem":
-                                            case "Base.PicklistItem":
-                                            case "Base.Date":
-                                            case "boolean":
-                                            case "number":
-                                                classProperty.type = splittedLine.ElementAt(i);
-                                                break;
-                                            default:
-                                                var match = Regex.Match(splittedLine.ElementAt(i), @".*:");
-                                                if (match.Success)
-                                                {
-                                                    classProperty.name = splittedLine.ElementAt(i).Replace(":", "");
-                                                    if (classProperty.name.First() == '_')
-                                                    {
-                                                        classProperty.name = classProperty.name.Remove(0, 1);
-                                                    }
-                                                    classProperty.jsonName = classProperty.name;
-                                                    classProperty.dartName = ToLowerCamelCase(classProperty.name);
-                                                }
-                                                match = Regex.Match(splittedLine.ElementAt(i), @".*;");
-                                                if (match.Success)
-                                                {
-                                                    if (classProperty.isInitialized)
-                                                    {
-                                                        classProperty.initValue = splittedLine.ElementAt(i).Replace(";", "");
-                                                    }
-                                                    else
-                                                    {
-                                                        classProperty.type = splittedLine.ElementAt(i).Replace(";", "");
-                                                    }
-                                                }
-                                                break;
-                                        }
-                                    }
-                                    dartStreamWriter.WriteLine(classProperty.ToDart());
-                                    classProperties.Add(classProperty);
-                                }
-                                if (line.Contains("constructor"))
-                                {
-                                    dartStreamWriter.WriteLine("  " + dartClassName + "({");
-                                    foreach (var property in classProperties)
-                                    {
-                                        if (property.readOnly && property.isInitialized)
-                                        {
-                                            continue;
-                                        }
-                                        dartStreamWriter.WriteLine($"    this.{property.dartName},");
-                                    }
-                                    dartStreamWriter.WriteLine("  }) : super(props: [");
-                                    foreach (var property in classProperties)
-                                    {
-                                        if (property.readOnly && property.isInitialized)
-                                        {
-                                            continue;
-                                        }
-                                        dartStreamWriter.WriteLine($"    {property.dartName},");
-                                    }
-                                    dartStreamWriter.WriteLine("  ]);");
-                                }
-                            }
-                            dartStreamWriter.WriteLine("");
-                            dartStreamWriter.WriteLine("  static _Metadata metadata = _Metadata();");
-                            dartStreamWriter.WriteLine("");
-                            dartStreamWriter.WriteLine($"  factory {dartClassName}.from{dartClassName}({dartClassName} source) => {dartClassName}.fromJson(source.toJson());");
-                            dartStreamWriter.WriteLine("");
-                            dartStreamWriter.WriteLine($"  factory {dartClassName}.fromJson(Map<String, dynamic> json) => _${dartClassName}FromJson(json);");
-                            dartStreamWriter.WriteLine($"  Map<String, dynamic> toJson() => _${dartClassName}ToJson(this);");
-                            dartStreamWriter.WriteLine("}");
-                            dartStreamWriter.WriteLine("");
-                            dartStreamWriter.WriteLine("class _Metadata {");
-                            foreach (var metadataField in metadata.metadataFields)
-                            {
-                                var metadataFieldClassName = '_' + metadataField.name.Substring(0, 1).ToUpper() + metadataField.name.Remove(0, 1);
-                                dartStreamWriter.WriteLine($"  final {metadataFieldClassName} {metadataField.name} = {metadataFieldClassName}();");
-                            }
-                            dartStreamWriter.WriteLine("}");
-                            dartStreamWriter.WriteLine("");
-                            foreach (var metadataField in metadata.metadataFields)
-                            {
-                                var metadataFieldClassName = '_' + metadataField.name.Substring(0, 1).ToUpper() + metadataField.name.Remove(0, 1);
-                                dartStreamWriter.WriteLine($"/// `{metadataField.originalName}`");
-                                dartStreamWriter.WriteLine($"class {metadataFieldClassName} {{");
-                                foreach (var metadataOption in metadataField.metadataOptions)
-                                {
-                                    dartStreamWriter.WriteLine($"  /// `{metadataOption.originalName}` = {metadataOption.value}");
-                                    dartStreamWriter.WriteLine($"  final {metadataOption.name} = {metadataOption.value};");
-                                }
-                                dartStreamWriter.WriteLine("}\n");
-                            }
+                            Convert(tsFileLines, dartStreamWriter);
                         }
                     }
-                    progressBar1.Value += 1;
                 }
-                progressBar1.Value = 0;
                 MessageBox.Show("Конвертация успешно завершена");
             } catch (Exception error)
             {
                 MessageBox.Show("При конвертации произошла ошибка: " + error.ToString());
+            }
+        }
+
+        private void Convert(string[] tsFileLines, StreamWriter dartStreamWriter)
+        {
+            var className = "";
+            var dartClassName = "";
+            var isMetadataMode = false;
+            var containsStaticMetadata = false;
+            var classExtendsName = "";
+            var metadata = new MetadataClass();
+            var currentMetadataField = new MetadataField();
+            var classProperties = new List<ClassProperty>();
+            dartStreamWriter.WriteLine("// This file is generated automatically");
+            dartStreamWriter.WriteLine("// Don't modify by hand!");
+            foreach (var origLine in tsFileLines)
+            {
+                var line = origLine;
+                line = line.Replace("\r", "");
+
+                if (line.StartsWith("//"))
+                {
+                    continue;
+                }
+
+                if (Regex.Match(line, @"readonly.*metadata.*=.*{").Success)
+                {
+                    isMetadataMode = true;
+                    containsStaticMetadata = true;
+                    continue;
+                }
+                if (isMetadataMode)
+                {
+                    if (line.Contains("};"))
+                    {
+                        isMetadataMode = false;
+                    }
+                    if (Regex.Match(line, @".*:.*{").Success)
+                    {
+                        if (currentMetadataField != null && currentMetadataField.name != null)
+                        {
+                            metadata.metadataFields.Add(currentMetadataField);
+                        }
+                        var fieldOriginalName = line.Split(' ').Where(s => s.Length > 0).First().Replace(":", "").Replace("?", "");
+                        currentMetadataField = new MetadataField
+                        {
+                            originalName = fieldOriginalName,
+                            name = ToLowerCamelCase(fieldOriginalName),
+                        };
+                        continue;
+                    }
+                    if (Regex.Match(line, @".*:.*\d.*").Success)
+                    {
+                        var optionOriginalName = line.Split(' ').Where(s => s.Length > 0).First().Replace(":", "").Replace("?", "");
+                        currentMetadataField.metadataOptions.Add(
+                            new MetadataOption()
+                            {
+                                originalName = optionOriginalName,
+                                name = ToLowerCamelCase(MetadataClass.TransleetToEN(optionOriginalName)),
+                                value = line.Split(' ').Where(s => s.Length > 0).Last().Replace(",", ""),
+                            }
+                        );
+                    }
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(line))
+                {
+                    dartStreamWriter.WriteLine("");
+                    continue;
+                }
+
+                if (line.Contains("import") && line.Contains("Base"))
+                {
+                    dartStreamWriter.WriteLine("import 'package:dompro/models/base.dart';");
+                }
+                if (line.Contains("import") && line.Contains("EntityProxyBase"))
+                {
+                    dartStreamWriter.WriteLine("import 'package:dompro/models/entity_proxy_base.dart';");
+                }
+                if (line.Contains("class"))
+                {
+                    var splittedLine = line.Split(' ');
+                    var classLine = "";
+                    for (int i = 0; i < splittedLine.Length; ++i)
+                    {
+                        if (className.Length > 0 && splittedLine.ElementAt(i).Contains(className))
+                        {
+                            continue;
+                        }
+                        if (splittedLine.ElementAt(i).Contains("export"))
+                        {
+                            continue;
+                        }
+                        if (splittedLine.ElementAt(i).Contains("extends"))
+                        {
+                            classLine += splittedLine.ElementAt(i) + ' ';
+                            classExtendsName = splittedLine.ElementAt(i + 1);
+                            continue;
+                        }
+                        if (splittedLine.ElementAt(i).Contains("class"))
+                        {
+                            classLine += splittedLine.ElementAt(i) + ' ';
+                            className = splittedLine.ElementAt(i + 1);
+                            dartClassName = ToLowerCamelCase(className.Substring(0, 1).ToUpper() + className.Remove(0, 1));
+                            classLine += dartClassName + ' ';
+                            continue;
+                        }
+                        classLine += splittedLine.ElementAt(i) + ' ';
+                    }
+                    dartStreamWriter.WriteLine("import 'package:json_annotation/json_annotation.dart';");
+                    dartStreamWriter.WriteLine("");
+                    dartStreamWriter.WriteLine($"part '{className.Substring(0, 1).ToLower() + className.Remove(0, 1)}.g.dart';");
+                    dartStreamWriter.WriteLine("");
+                    dartStreamWriter.WriteLine("@JsonSerializable(");
+                    dartStreamWriter.WriteLine("  explicitToJson: true,");
+                    dartStreamWriter.WriteLine(")");
+                    dartStreamWriter.WriteLine(classLine);
+                }
+                if (Regex.Match(line, @"(.[^\(\)])*:.*;").Success)
+                {
+                    var classProperty = new ClassProperty();
+                    var splittedLine = line.Split(' ');
+                    for (int i = 0; i < splittedLine.Length; ++i)
+                    {
+                        switch (splittedLine.ElementAt(i))
+                        {
+                            case "private":
+                                classProperty.isPrivate = true;
+                                break;
+                            case "public":
+                                classProperty.isPrivate = false;
+                                break;
+                            case "readonly":
+                                classProperty.readOnly = true;
+                                break;
+                            case "=":
+                                classProperty.isInitialized = true;
+                                break;
+                            case "string":
+                            case "Base.LookupItem":
+                            case "Base.LookupItem[]":
+                            case "Base.PicklistItem":
+                            case "Base.PicklistItem[]":
+                            case "Base.Date":
+                            case "boolean":
+                            case "number":
+                                classProperty.type = splittedLine.ElementAt(i);
+                                break;
+                            default:
+                                var match = Regex.Match(splittedLine.ElementAt(i), @".*:");
+                                if (match.Success)
+                                {
+                                    classProperty.name = splittedLine.ElementAt(i).Replace(":", "").Replace("?", "");
+                                    if (classProperty.name.First() == '_')
+                                    {
+                                        classProperty.name = classProperty.name.Remove(0, 1);
+                                    }
+                                    classProperty.jsonName = classProperty.name;
+                                    classProperty.dartName = ToLowerCamelCase(classProperty.name);
+                                }
+                                match = Regex.Match(splittedLine.ElementAt(i), @".*;");
+                                if (match.Success)
+                                {
+                                    if (classProperty.isInitialized)
+                                    {
+                                        classProperty.initValue = splittedLine.ElementAt(i).Replace(";", "");
+                                    }
+                                    else
+                                    {
+                                        classProperty.type = splittedLine.ElementAt(i).Replace(";", "");
+                                    }
+                                }
+                                break;
+                        }
+                    }
+                    dartStreamWriter.WriteLine(classProperty.ToDart());
+                    classProperties.Add(classProperty);
+                }
+                if (line == "}")
+                {
+                    dartStreamWriter.WriteLine("  " + dartClassName + "({");
+                    foreach (var property in classProperties)
+                    {
+                        if (property.readOnly && property.isInitialized)
+                        {
+                            continue;
+                        }
+                        dartStreamWriter.WriteLine($"    this.{property.dartName},");
+                    }
+                    if (classExtendsName == "EntityProxyBase")
+                    {
+                        dartStreamWriter.WriteLine("  }) : super(props: [");
+                        foreach (var property in classProperties)
+                        {
+                            if (property.readOnly && property.isInitialized)
+                            {
+                                continue;
+                            }
+                            dartStreamWriter.WriteLine($"    {property.dartName},");
+                        }
+                        dartStreamWriter.WriteLine("  ]);");
+                    } else
+                    {
+                        dartStreamWriter.WriteLine("  });");
+                    }
+                }
+            }
+            if (containsStaticMetadata)
+            {
+                dartStreamWriter.WriteLine("");
+                dartStreamWriter.WriteLine("  static _Metadata metadata = _Metadata();");
+            }
+            dartStreamWriter.WriteLine("");
+            dartStreamWriter.WriteLine($"  factory {dartClassName}.from{dartClassName}({dartClassName} source) => {dartClassName}.fromJson(source.toJson());");
+            dartStreamWriter.WriteLine("");
+            dartStreamWriter.WriteLine($"  factory {dartClassName}.fromJson(Map<String, dynamic> json) => _${dartClassName}FromJson(json);");
+            dartStreamWriter.WriteLine($"  Map<String, dynamic> toJson() => _${dartClassName}ToJson(this);");
+            dartStreamWriter.WriteLine("}");
+            dartStreamWriter.WriteLine("");
+            if (containsStaticMetadata)
+            {
+                dartStreamWriter.WriteLine("class _Metadata {");
+                foreach (var metadataField in metadata.metadataFields)
+                {
+                    var metadataFieldClassName = '_' + metadataField.name.Substring(0, 1).ToUpper() + metadataField.name.Remove(0, 1);
+                    dartStreamWriter.WriteLine($"  final {metadataFieldClassName} {metadataField.name} = {metadataFieldClassName}();");
+                }
+                dartStreamWriter.WriteLine("}");
+                dartStreamWriter.WriteLine("");
+                foreach (var metadataField in metadata.metadataFields)
+                {
+                    var metadataFieldClassName = '_' + metadataField.name.Substring(0, 1).ToUpper() + metadataField.name.Remove(0, 1);
+                    dartStreamWriter.WriteLine($"/// `{metadataField.originalName}`");
+                    dartStreamWriter.WriteLine($"class {metadataFieldClassName} {{");
+                    foreach (var metadataOption in metadataField.metadataOptions)
+                    {
+                        dartStreamWriter.WriteLine($"  /// `{metadataOption.originalName}` = {metadataOption.value}");
+                        dartStreamWriter.WriteLine($"  final {metadataOption.name} = {metadataOption.value};");
+                    }
+                    dartStreamWriter.WriteLine("}\n");
+                }
             }
         }
 
@@ -343,8 +390,14 @@ namespace TS2Dart
                     case "Base.LookupItem":
                         result += "LookupItem ";
                         break;
+                    case "Base.LookupItem[]":
+                        result += "List<LookupItem> ";
+                        break;
                     case "Base.PicklistItem":
                         result += "PicklistItem ";
+                        break;
+                    case "Base.PicklistItem[]":
+                        result += "List<PicklistItem> ";
                         break;
                     case "Base.Date":
                         result += "Date ";
