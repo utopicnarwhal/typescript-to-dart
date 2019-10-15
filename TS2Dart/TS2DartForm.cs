@@ -164,10 +164,12 @@ namespace TS2Dart
 
                 if (line.Contains("import") && line.Contains("Base"))
                 {
+                    dartStreamWriter.WriteLine("// ignore: unused_import");
                     dartStreamWriter.WriteLine("import 'package:dompro/models/base.dart';");
                 }
                 if (line.Contains("import") && line.Contains("EntityProxyBase"))
                 {
+                    dartStreamWriter.WriteLine("// ignore: unused_import");
                     dartStreamWriter.WriteLine("import 'package:dompro/models/entity_proxy_base.dart';");
                 }
                 if (line.Contains("class"))
@@ -269,7 +271,7 @@ namespace TS2Dart
                     dartStreamWriter.WriteLine(classProperty.ToDart());
                     classProperties.Add(classProperty);
                 }
-                if (line == "}")
+                if (line.Contains("constructor"))
                 {
                     dartStreamWriter.WriteLine("  " + dartClassName + "({");
                     foreach (var property in classProperties)
