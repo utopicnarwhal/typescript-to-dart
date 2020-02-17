@@ -125,6 +125,10 @@ namespace TS2Dart
                 {
                     if (line.Contains("};"))
                     {
+                        if (currentMetadataField != null && currentMetadataField.name != null)
+                        {
+                            metadata.metadataFields.Add(currentMetadataField);
+                        }
                         isMetadataMode = false;
                     }
                     if (Regex.Match(line, @".*:.*{").Success)
@@ -141,7 +145,7 @@ namespace TS2Dart
                         };
                         continue;
                     }
-                    if (Regex.Match(line, @".*:.*\d.*").Success)
+                    if (Regex.Match(line, @".*:.*").Success)
                     {
                         var optionOriginalName = line.Split(' ').Where(s => s.Length > 0).First().Replace(":", "").Replace("?", "");
                         currentMetadataField.metadataOptions.Add(
@@ -206,9 +210,7 @@ namespace TS2Dart
                     dartStreamWriter.WriteLine("");
                     dartStreamWriter.WriteLine($"part '{className.Substring(0, 1).ToLower() + className.Remove(0, 1)}.g.dart';");
                     dartStreamWriter.WriteLine("");
-                    dartStreamWriter.WriteLine("@JsonSerializable(");
-                    dartStreamWriter.WriteLine("  explicitToJson: true,");
-                    dartStreamWriter.WriteLine(")");
+                    dartStreamWriter.WriteLine("@JsonSerializable()");
                     dartStreamWriter.WriteLine(classLine);
                 }
                 if (Regex.Match(line, @"(.[^\(\)])*:.*;").Success)
